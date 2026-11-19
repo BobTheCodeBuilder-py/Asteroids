@@ -20,6 +20,7 @@ ORANGE = (204, 139, 27)
 BGREEN = (50, 168, 139)
 LBGREEN = (16, 227, 175) 
 PURPLE = (125, 41, 227)
+WHITE = (255, 255, 255)
 loop = True
 
 clock = pg.time.Clock()
@@ -133,15 +134,20 @@ def pause_button_clicked(x, y, event):
     if rect1.collidepoint(mouse_pos):
         pause = 1-pause
         
-def check_out_of_bounds(x, y):
-    if x < 0:
-        x+=size[0]
-    elif x > size[0]:
-        x-=size[0]
-    if y < 0:
-        y+=size[1]
-    elif y > size[1]:
-        y -= size[1]
+def check_out_of_bounds(x, y, radius):
+    global speedx, speedy
+    if x-radius < 0:
+        x=radius
+        speedx = 0
+    elif x+radius > size[0]:
+        x=size[0]-radius
+        speedx = 0
+    if y-radius < 0:
+        y=radius
+        speedy = 0
+    elif y+radius > size[1]:
+        y = size[1]-radius
+        speedy = 0
     return(x, y)
 
 def draw_overlay(transparency):
@@ -208,7 +214,16 @@ def tick_projectiles():
                 positions.pop(i)
                 speeds.pop(i)
 
+def draw_cursor(rad):
+    mouse_x, mouse_y = pg.mouse.get_pos()
+    pg.draw.circle(window, WHITE, (mouse_x, mouse_y), rad, width=3)
+    pg.draw.line(window, WHITE, (mouse_x, mouse_y+rad), (mouse_x, mouse_y+rad*2), width=3)
+    pg.draw.line(window, WHITE, (mouse_x, mouse_y-rad), (mouse_x, mouse_y-rad*2), width=3)
+    pg.draw.line(window, WHITE, (mouse_x+rad, mouse_y), (mouse_x+rad*2, mouse_y), width=3)
+    pg.draw.line(window, WHITE, (mouse_x-rad, mouse_y), (mouse_x-rad*2, mouse_y), width=3)
+    
 
+pg.mouse.set_visible(False)
 while loop:
     for event in pg.event.get():
         if event.type == pg.QUIT:
@@ -242,7 +257,7 @@ while loop:
         x += speedx
         y += speedy
 
-        x, y = check_out_of_bounds(x, y)
+        x, y = check_out_of_bounds(x, y, 15)
 
         if space == 1:
             time += 1
@@ -265,10 +280,10 @@ while loop:
         draw_text(version, (50, 240), LBGREEN, 2)
 
     draw_pause_button(size[0]-50, size[1]-50, pause)
+    draw_cursor(10)
     pg.display.update()
     clock.tick(FPS)
 
 pg.quit()
 
-# comment
 print(f"Debug: Remaining Projectiles: {len(positions)}")
