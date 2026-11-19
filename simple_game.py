@@ -1,5 +1,6 @@
 import pygame as pg
 import math
+import random
 
 pg.init()
 
@@ -21,6 +22,7 @@ BGREEN = (50, 168, 139)
 LBGREEN = (16, 227, 175) 
 PURPLE = (125, 41, 227)
 WHITE = (255, 255, 255)
+ASTEROID_COLOR = (81, 94, 112)
 loop = True
 
 clock = pg.time.Clock()
@@ -41,8 +43,10 @@ space = 0
 font1 = pg.font.SysFont("Arial", 50)
 font2 = pg.font.SysFont("Arial", 20)
 
-positions = []
-speeds = []
+projectile_positions = []
+projectile_speeds = []
+asteroid_positions = []
+asteroid_speeds = []
 
 def draw_player(x, y, radius):
     pg.draw.circle(window, GREEN, (x, y), radius//2, 0)
@@ -178,28 +182,28 @@ def rotate_around_pivot(point, pivot, angle):
 
 def spawn_projectile(x, y, velocity, angle):
     angle += math.pi / 2
-    global positions, speeds
-    positions.append((x, y))
+    global projectile_positions, projectile_speeds
+    projectile_positions.append((x, y))
     velocity_x = velocity * math.cos(angle)
     velocity_y = velocity * math.sin(angle)
-    speeds.append((velocity_x+speedx, velocity_y+speedy))
+    projectile_speeds.append((velocity_x+speedx, velocity_y+speedy))
 
 def draw_projectiles(color):
-    global positions, speeds
-    if len(positions) > 0:
-        for i in positions:
+    global projectile_positions, projectile_speeds
+    if len(projectile_positions) > 0:
+        for i in projectile_positions:
             pg.draw.circle(window, color, i, 5, 0)
 
 def tick_projectiles():
-    global positions, speeds, loop
-    if len(positions) != len(speeds):
+    global projectile_positions, projectile_speeds, loop
+    if len(projectile_positions) != len(projectile_speeds):
         loop = False
     tmpls = []
-    for i in range(len(positions)):
-        pos = positions[i]
+    for i in range(len(projectile_positions)):
+        pos = projectile_positions[i]
         x = pos[0]
         y = pos[1]
-        v = speeds[i]
+        v = projectile_speeds[i]
         vx = v[0]
         vy = v[1]
         if (x < 0 or x > size[0]) or (y < 0 or y > size[1]):
@@ -207,12 +211,12 @@ def tick_projectiles():
 
         x += vx
         y += vy
-        positions[i] = (x, y)
+        projectile_positions[i] = (x, y)
     if len(tmpls) > 0:
         for i in tmpls:
-            if i <= len(positions):
-                positions.pop(i)
-                speeds.pop(i)
+            if i <= len(projectile_positions):
+                projectile_positions.pop(i)
+                projectile_speeds.pop(i)
 
 def draw_cursor(rad):
     mouse_x, mouse_y = pg.mouse.get_pos()
@@ -221,7 +225,19 @@ def draw_cursor(rad):
     pg.draw.line(window, WHITE, (mouse_x, mouse_y-rad), (mouse_x, mouse_y-rad*2), width=3)
     pg.draw.line(window, WHITE, (mouse_x+rad, mouse_y), (mouse_x+rad*2, mouse_y), width=3)
     pg.draw.line(window, WHITE, (mouse_x-rad, mouse_y), (mouse_x-rad*2, mouse_y), width=3)
-    
+
+def spawn_asteroid(maxv):
+    x = random.randrange(0, size[0])
+    y = random.randrange(0, size[1])
+    vx = random.randrange(0-maxv, maxv)
+    vy = random.randrange(0-maxv, maxv)
+    asteroid_positions.append((x, y))
+    asteroid_speeds.append((vx, vy))
+
+def draw_asteroids(color):
+    if len(asteroid_positions) > 0:
+        for i in asteroid_positions:
+            pg.draw.circle(window, color, i, 30, 0)
 
 pg.mouse.set_visible(False)
 while loop:
@@ -231,6 +247,9 @@ while loop:
             break
         if event.type == pg.MOUSEBUTTONDOWN:
             pause_button_clicked(size[0]-50, size[1]-50, event)
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_x:
+                spawn_asteroid(3)
 
     keys = pg.key.get_pressed()
     window.fill(BLACK)
@@ -267,6 +286,7 @@ while loop:
             time = 0
 
         draw_projectiles(PURPLE)
+        draw_asteroids(ASTEROID_COLOR)
         angle = draw_player(x, y, 15)
         draw_keys(38, size[1]-68, keyx, keyy)
         draw_space(size[0]//2-45, size[1]-40, space)
@@ -286,4 +306,4 @@ while loop:
 
 pg.quit()
 
-print(f"Debug: Remaining Projectiles: {len(positions)}")
+print(f"Debug: Remaining Projectiles: {len(projectile_positions)}")
